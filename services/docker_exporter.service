@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker Exporter
+Wants=network-online
+After=network-online.target
+
+[Service]
+User=prometheus
+Type=simple
+ExecStart=/opt/prometheus/docker_exporter/docker_exporter
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

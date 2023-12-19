@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -35,6 +39,7 @@ var (
 		},
 		[]string{"container_name", "container_id", "image"},
 	)
+	port = flag.String("port", "3003", "Define a porta em que o servidor deve escutar")
 )
 
 func init() {
@@ -80,12 +85,29 @@ func recordMetrics() {
 }
 
 func main() {
-	fmt.Println("Starting server on http://0.0.0.0:3003/metrics")
+	flag.Parse()
+	addr := fmt.Sprintf("0.0.0.0:%s", *port)
+	fmt.Printf("Starting server on http://%s/metrics\n", addr)
+
 	go recordMetrics()
 
-	http.Handle("/metrics", promhttp.Handler())
-	err := http.ListenAndServe("0.0.0.0:3003", nil)
-	if err != nil {
-		log.Fatalf("Error starting HTTP server: %v", err)
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	srv := &http.Server{Addr: addr, Handler: mux}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Error starting HTTP server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("Shutting down server...")
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 }

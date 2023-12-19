@@ -1,13 +1,18 @@
 [Unit]
 Description=Docker Exporter
-Wants=network-online
+Wants=network-online.target
 After=network-online.target
+
+# Internal Restart
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 User=prometheus
-Type=simple
+WorkingDirectory=/opt/prometheus/docker_exporter
 ExecStart=/opt/prometheus/docker_exporter/docker_exporter
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

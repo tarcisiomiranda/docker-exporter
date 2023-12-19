@@ -29,10 +29,12 @@ go get github.com/prometheus/client_golang/prometheus/promhttp
 2. Instale as dependências: `pip install -r requirements.txt`
 3. Execute o script: `python docker_exporter.py --mode [dev|prd]`
 
-## Instalação e Uso (Go)
+## Instalação e Uso (Go) - Estático
 1. Clone o repositório: `git clone [URL do Repositório]`
-2. Compile o código: GOOS=linux GOARCH=amd64 go build -o docker_exporter
+3. <s>Compile o código: GOOS=linux GOARCH=amd64 go build -o docker_exporter</s>
+2. Compile o código: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .
 3. Execute o binário: ./docker_exporter`
+
 
 ## Endpoints
 - `/metrics`: Retorna as métricas atuais dos containers.
@@ -47,19 +49,32 @@ go get github.com/prometheus/client_golang/prometheus/promhttp
 
 ## Instalação do binário GO no Linux
 
+### Criando usuário *Prometheus* se setando as permissões
+```
+useradd prometheus
+usermod -aG docker prometheus
+mkdir /opt/prometheus/docker_exporter/
+chown -R prometheus:prometheus /opt/prometheus/docker_exporter/
+```
+
 Conteúdo do services do systemd
 ***/etc/systemd/system/docker_exporter.service***
 ```
 [Unit]
 Description=Docker Exporter
-Wants=network-online
+Wants=network-online.target
 After=network-online.target
+
+# Internal Restart
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 User=prometheus
-Type=simple
+WorkingDirectory=/opt/prometheus/docker_exporter
 ExecStart=/opt/prometheus/docker_exporter/docker_exporter
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

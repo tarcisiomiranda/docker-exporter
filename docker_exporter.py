@@ -36,9 +36,9 @@ def metrics():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default='prd', help='App mode: "dev" or "prd"', required=True)
-    args = parser.parse_args()
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--mode', default='prd', help='App mode: "dev" or "prd"', required=True)
+    args = arg_parser.parse_args()
 
     if args.mode.lower() == 'dev':
         print(' * Running: Exporter development...')

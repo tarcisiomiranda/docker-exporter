@@ -19,6 +19,29 @@ jobs:
       with:
         go-version: '1.x'
 
+    - name: Print GitHub context
+      run: echo "$GITHUB_CONTEXT"
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+
+    - name: Print environment variables
+      run: |
+        echo "Run ID: $GITHUB_RUN_ID"
+        echo "Workflow: $GITHUB_WORKFLOW"
+        echo "Action: $GITHUB_ACTION"
+        echo "Actor: $GITHUB_ACTOR"
+        echo "Repository: $GITHUB_REPOSITORY"
+        echo "Event Name: $GITHUB_EVENT_NAME"
+        echo "Event Path: $GITHUB_EVENT_PATH"
+        echo "Workspace: $GITHUB_WORKSPACE"
+        echo "SHA: $GITHUB_SHA"
+        echo "Ref: $GITHUB_REF"
+        echo "Head Ref: $GITHUB_HEAD_REF"
+        echo "Base Ref: $GITHUB_BASE_REF"
+
+    - name: Print event payload
+      run: cat $GITHUB_EVENT_PATH
+
     - name: Initialize Go module and install dependencies
       run: |
         go mod init docker_exporter
@@ -30,14 +53,19 @@ jobs:
       run: |
         CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .
 
+    - name: Extract tag name
+      id: get_tag_name
+      run: echo "::set-output name=tag_name::${GITHUB_REF#refs/tags/}"
+      env:
+        GITHUB_REF: ${{ github.ref }}
+
     - name: Create Release
-      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
+        tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
+        release_name: Release ${{ steps.get_tag_name.outputs.tag_name }}
         draft: false
         prerelease: false
 

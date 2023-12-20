@@ -3,6 +3,9 @@
 ## Descrição
 Este projeto fornece um exportador de métricas do Docker para o Prometheus, escrito em Python. Ele permite monitorar vários parâmetros de containers Docker, como tempo de atividade, status e imagem, expondo-os para o Prometheus.
 
+<!-- <img src="static/docker_exporter.png" width="800"/> -->
+![Banner](static/docker_exporter.png)
+
 ## Características
 - **Uptime do Container**: Mede o tempo desde o início de um container.
 - **Status do Container**: Fornece o status atual do container.

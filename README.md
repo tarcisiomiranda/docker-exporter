@@ -97,7 +97,7 @@ journalctl -u docker_exporter
 ```
 
 ## Contribuições
-Contribuições são bem-vindas. Por favor, abra um issue ou pull request para discutir mudanças propostas.
+Contribuições são bem-vindas. Por favor, abra um issue ou pull request para discutir próximas mudanças propostas.
 
 ## Licença
 Este projeto está sob a Licença Pública Geral GNU (GPL), que é uma licença de software livre que garante a liberdade de compartilhar e alterar todo o software licenciado para garantir que ele permaneça livre.

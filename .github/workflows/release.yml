@@ -1,4 +1,4 @@
-name: Build and Release Github
+name: Build and Release
 
 on:
   push:
@@ -6,12 +6,10 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    name: Build and Release
+  release:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v2
 
     - name: Set up Go
@@ -21,8 +19,7 @@ jobs:
 
     - name: Build binary
       run: |
-        chmod +x build.sh
-        ./build.sh
+        CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .
 
     - name: Create Release
       id: create_release

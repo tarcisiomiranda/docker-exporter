@@ -21,7 +21,8 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Print New Tag
-      run: echo "New Tag: ${{ steps.create_tag.outputs.new_tag }}"
+      run: |
+        echo "New Tag: ${{ steps.create_tag.outputs.new_tag }}"
 
     - name: Set up Go
       uses: actions/setup-go@v4

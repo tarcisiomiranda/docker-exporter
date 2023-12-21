@@ -14,11 +14,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Get Git Tag
-      uses: little-core-labs/get-git-tag@v3.0.1
-      id: tagName
+    - name: Create Git Tag
+      uses: mathieudutour/github-tag-action@v5.6
+      id: create_tag
       with:
-        tagRegex: "v(.*)"
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Print New Tag
+      run: echo "New Tag: ${{ steps.create_tag.outputs.new_tag }}"
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -41,8 +44,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.tagName.outputs.tag }}
-        release_name: Release ${{ steps.tagName.outputs.tag }}
+        tag_name: ${{ steps.create_tag.outputs.new_tag }}
+        release_name: Release ${{ steps.create_tag.outputs.new_tag }}
         draft: false
         prerelease: false
 
@@ -55,4 +58,3 @@ jobs:
         asset_path: ./docker_exporter
         asset_name: docker_exporter
         asset_content_type: application/octet-stream
-

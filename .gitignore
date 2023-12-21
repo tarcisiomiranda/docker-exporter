@@ -1,3 +1,4 @@
 docker_exporter
 go.mod
 go.sum
+SECRETS.txt

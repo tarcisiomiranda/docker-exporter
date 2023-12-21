@@ -1,12 +1,11 @@
-from prometheus_client import generate_latest, Gauge, Info
-from flask import Flask, Response
+from prometheus_client import generate_latest, Gauge, Info, start_http_server
 from datetime import datetime
 from dateutil import parser
 import argparse
 import docker
 import pytz
+import time
 
-app = Flask(__name__)
 client = docker.from_env()
 
 container_uptime = Gauge('container_uptime_seconds', 'Time since container started', ['container_name', 'container_id'])
@@ -29,24 +28,14 @@ def get_container_metrics():
         container_status.labels(container.name, container.short_id, status).set(1)
         container_image.labels(container.name, container.short_id).info({'image': image})
 
-@app.route('/metrics')
-def metrics():
-    get_container_metrics()
-    return Response(generate_latest(), mimetype='text/plain')
-
-
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--mode', default='prd', help='App mode: "dev" or "prd"', required=True)
+    arg_parser.add_argument('--port', default=3003, type=int, help='Port to listen on')
     args = arg_parser.parse_args()
 
-    if args.mode.lower() == 'dev':
-        print(' * Running: Exporter development...')
-        app.run(debug=True, host='0.0.0.0', port=3003, use_reloader=True)
+    print('Starting Prometheus metrics server on port {}'.format(args.port))
+    start_http_server(args.port)
 
-    elif args.mode.lower() == 'prd':
-        print(' * Running: Exporter production...')
-        app.run(debug=False, host='0.0.0.0', port=3003, use_reloader=False)
-
-    else:
-        print('Invalid app mode. Use "dev" or "prd".')
+    while True:
+        get_container_metrics()
+        time.sleep(1)

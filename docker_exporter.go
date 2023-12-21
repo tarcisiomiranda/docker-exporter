@@ -54,7 +54,7 @@ func recordMetrics() {
 		panic(err)
 	}
 
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true})
 	if err != nil {
 		panic(err)
 	}

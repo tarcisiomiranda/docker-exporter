@@ -14,8 +14,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Fetch tags
-      run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    - name: Get Tag
+      id: get_tag
+      uses: olegtarasov/get-tag@v1
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -33,26 +34,13 @@ jobs:
       run: |
         CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .
 
-    - name: Get the version
-      id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-    - name: Get latest tag
-      run: echo "LATEST_TAG=$(git describe --abbrev=0 --tags)" >> $GITHUB_ENV
-
-    - name: Print latest tag
-      run: echo "Latest tag is $LATEST_TAG"
-
-    - name: Print GITHUB_ENV
-      run: echo $GITHUB_ENV
-
     - name: Create Release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.LATEST_TAG }}
-        release_name: Release ${{ env.LATEST_TAG }}
+        tag_name: ${{ steps.get_tag.outputs.tag }}
+        release_name: Release ${{ steps.get_tag.outputs.tag }}
         draft: false
         prerelease: false
 

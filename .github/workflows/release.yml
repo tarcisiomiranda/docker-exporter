@@ -19,9 +19,17 @@ jobs:
       id: create_tag
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        default_bump: patch
+        tag_prefix: v
+        release_branches: master,main
+        create_annotated_tag: false
+        fetch_all_tags: false
+        dry_run: false
 
     - name: Print New Tag
-      run: echo "New Tag: ${{ steps.create_tag.outputs.new_tag }}"
+      if: steps.create_tag.outputs.new_tag != ''
+      run: |
+        echo "New Tag: ${{ steps.create_tag.outputs.new_tag }}"
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -40,7 +48,9 @@ jobs:
         CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .
 
     - name: Create Release
+      if: steps.create_tag.outputs.new_tag != ''
       uses: actions/create-release@v1
+      id: create_release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -50,6 +60,7 @@ jobs:
         prerelease: false
 
     - name: Upload Release Asset
+      if: steps.create_tag.outputs.new_tag != ''
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

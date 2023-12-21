@@ -19,7 +19,8 @@ jobs:
       uses: olegtarasov/get-tag@v1
 
     - name: Print Captured Tag
-      run: echo "Captured Tag: ${{ steps.get_tag.outputs.tag }}"
+      run: |
+        echo "Captured Tag: ${{ steps.get_tag.outputs.tag }}"
 
     - name: Set up Go
       uses: actions/setup-go@v4

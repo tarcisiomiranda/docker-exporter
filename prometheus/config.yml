@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'docker_export'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['192.168.29.12:9100', '192.168.29.6:9100']

@@ -38,7 +38,9 @@ jobs:
 
     - name: Initialize Go module and install dependencies
       run: |
-        go mod init docker-exporter
+        if [ ! -f go.mod ]; then
+          go mod init docker-exporter
+        fi
         go mod tidy
 
     - name: Build binary

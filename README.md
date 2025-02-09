@@ -8,49 +8,31 @@ This project provides a Docker metrics exporter for Prometheus, written in Go. I
 <!-- <img src="static/docker_exporter.png" width="800"/> -->
 ![Banner](static/docker_exporter.png)
 
-## Features
-- **Container Uptime**: Measures the time since a container started.
-- **Container Status**: Provides the current container status.
-- **Container Image**: Shows the image used by the container.
-
-## Go Requirements
-To compile and run the Go version of the exporter:
+## Quick Installation (Linux)
+You can quickly install the latest version using this script:
 
 ```bash
-go mod init docker_exporter
-go mod tidy
-```
+#!/bin/bash
 
-## Installation and Usage (Go)
-1. Compile the code: `CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o docker_exporter .`
-2. Run the binary: `./docker_exporter serve -p 9100`
+# Create directories and user
+sudo useradd -r -s /bin/false prometheus
+sudo usermod -aG docker prometheus
+sudo mkdir -p /opt/prometheus/docker_exporter
+sudo chown -R prometheus:prometheus /opt/prometheus/docker_exporter
 
-## Endpoints
-- `/metrics`: Returns current container metrics.
+# Download the binary
+sudo curl -L https://github.com/tarcisiomiranda/docker-exporter/releases/download/v1.0.5/docker_exporter -o /opt/prometheus/docker_exporter/docker_exporter
 
-## Execution Modes - GO
-- Development Mode: `go run ./docker_exporter.go`
-- Production Mode: `./docker_exporter serve -p 9100`
+# Make it executable
+sudo chmod +x /opt/prometheus/docker_exporter/docker_exporter
 
-## Installing GO binary on Linux
-
-### Creating *Prometheus* user and setting permissions
-```
-useradd prometheus
-usermod -aG docker prometheus
-mkdir /opt/prometheus/docker_exporter/
-chown -R prometheus:prometheus /opt/prometheus/docker_exporter/
-```
-
-Systemd service content
-***/etc/systemd/system/docker_exporter.service***
-```
+# Create systemd service file
+cat << EOF | sudo tee /etc/systemd/system/docker-exporter.service
 [Unit]
 Description=Docker Exporter
 Wants=network-online.target
-After=network-online.target
+After=network-online.target docker.service
 
-# Internal Restart
 StartLimitIntervalSec=600
 StartLimitBurst=5
 
@@ -63,88 +45,81 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+# Reload systemd
+sudo systemctl daemon-reload
+sudo systemctl enable docker-exporter
+sudo systemctl start docker-exporter
+
+echo "Installation completed! Docker Exporter is running on port 9100"
 ```
 
-Reload systemd, enable and start the exporter
+Save this script as `install-docker-exporter.sh` and run:
 ```bash
-systemctl daemon-reload
-systemctl enable docker_exporter
-systemctl start docker_exporter
+curl -O https://raw.githubusercontent.com/tarcisiomiranda/docker-exporter/main/install-docker-exporter.sh
+chmod +x install-docker-exporter.sh
+sudo ./install-docker-exporter.sh
 ```
 
-View GO program logs
+## Features
+- **Container Uptime**: Measures the time since a container started.
+- **Container Status**: Provides the current container status.
+- **Container Image**: Shows the image used by the container.
+
+## Development Setup
+To compile and run the Docker Exporter from source:
+
 ```bash
-journalctl -u docker_exporter
+# Clone the repository
+git clone https://github.com/tarcisiomiranda/docker-exporter.git
+cd docker-exporter
+
+# Initialize Go modules
+go mod tidy
+
+# Build the binary
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o docker_exporter .
 ```
 
-## Creating .deb package
+## Endpoints
+- `/metrics`: Returns current container metrics (default port: 9100)
 
-To create a .deb package for Docker Exporter, follow these steps:
+## Execution Modes
+- Development Mode: `go run docker_exporter.go serve -p 9100`
+- Production Mode: `./docker_exporter serve -p 9100`
 
-1. First, install the necessary tools:
+## Monitoring
+View service logs:
 ```bash
-sudo apt-get install build-essential dh-make devscripts
+journalctl -u docker-exporter -f
 ```
 
-2. Create the package directory structure:
+Check service status:
 ```bash
-mkdir -p docker-exporter_1.0.0/DEBIAN
-mkdir -p docker-exporter_1.0.0/opt/prometheus/docker_exporter
-mkdir -p docker-exporter_1.0.0/etc/systemd/system
+systemctl status docker-exporter
 ```
 
-3. Create the DEBIAN/control file:
-```bash
-cat > docker-exporter_1.0.0/DEBIAN/control << EOL
-Package: docker-exporter
-Version: 1.0.0
-Section: utils
-Priority: optional
-Architecture: amd64
-Depends: docker-ce | docker.io
-Maintainer: Your Name <email>
-Description: Docker Exporter for Prometheus
- Docker metrics exporter for Prometheus,
- allowing Docker container monitoring.
-EOL
+## Building from Source
+Requirements:
+- Go 1.22 or later
+- Docker (for monitoring containers)
+
+## Prometheus Configuration
+Add this to your `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'docker_exporter'
+    static_configs:
+      - targets: ['localhost:9100']
 ```
 
-4. Compile the binary and copy necessary files:
-```bash
-# Compile the binary
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o docker-exporter_1.0.0/opt/prometheus/docker_exporter/docker_exporter
-
-# Copy the systemd service file
-cp /etc/systemd/system/docker_exporter.service docker-exporter_1.0.0/etc/systemd/system/
-```
-
-5. Create the .deb package:
-```bash
-dpkg-deb --build docker-exporter_1.0.0
-```
-
-6. Install the package:
-```bash
-sudo dpkg -i docker-exporter_1.0.0.deb
-```
-
-7. If needed, install missing dependencies:
-```bash
-sudo apt-get install -f
-```
-
-After installation, the service will be automatically configured and you can manage it with:
-```bash
-sudo systemctl start docker_exporter
-sudo systemctl enable docker_exporter
-sudo systemctl status docker_exporter
-```
-
-## Contributions
-Contributions are welcome. Please open an issue or pull request to discuss proposed changes.
+## Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
-This project is under the GNU General Public License (GPL), which is a free software license that ensures the freedom to share and modify all licensed software to ensure it remains free.
+This project is licensed under the GNU General Public License (GPL).
 
-## Frontend
-Currently, the frontend for this system is under development. For more information, you can check the [docker-export-webui](https://github.com/tarcisiomiranda/docker-export-webui.git) repository.
+## Support
+If you encounter any issues or have questions, please open an issue on GitHub.

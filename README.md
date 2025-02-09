@@ -19,9 +19,6 @@ To compile and run the Go version of the exporter:
 ```bash
 go mod init docker_exporter
 go mod tidy
-go get github.com/docker/docker/client
-go get github.com/prometheus/client_golang/prometheus
-go get github.com/prometheus/client_golang/prometheus/promhttp
 ```
 
 ## Installation and Usage (Go)
